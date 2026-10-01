@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum MediaSource {
+  UPLOAD
+  YOUTUBE
+  VIMEO
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum EventStatus {
+  UPCOMING
+  COMPLETED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  SNACK
+  DINNER
+}
+
+enum MessageType {
+  CONTACT
+  ENROLLMENT
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+/// Every uploaded photo / video (or linked YouTube / Vimeo video).
+/// Binary files live in object storage; only the storage keys are stored here.
+model Media {
+  id          String      @id @default(cuid())
+  type        MediaType
+  source      MediaSource @default(UPLOAD)
+  key         String?     @unique
+  thumbKey    String?     @unique
+  externalUrl String?
+  externalId  String?
+  externalThumbUrl String?
+  mimeType    String?
+  size        Int?
+  width       Int?
+  height      Int?
+  title       String      @default("")
+  description String      @default("")
+  alt         String      @default("")
+  category    String      @default("DAILY")
+  takenAt     DateTime    @default(now()) @db.Date
+  /// Privacy: private media is never returned by public APIs and its files require an admin session.
+  isPublic    Boolean     @default(true)
+  published   Boolean     @default(true)
+  inGallery   Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  dailyLinks  DailyActivityMedia[]
+  eventLinks  EventMedia[]
+  spaceLinks  SpaceMedia[]
+
+  eventCovers     Event[]       @relation("EventCover")
+  promotionImages Promotion[]   @relation("PromotionImage")
+  activityImages  Activity[]    @relation("ActivityImage")
+  spaceCovers     Space[]       @relation("SpaceCover")
+  testimonialPhotos Testimonial[] @relation("TestimonialPhoto")
+  mealImages      Meal[]        @relation("MealImage")
+
+  @@index([type, published, isPublic])
+  @@index([category])
+  @@index([takenAt])
+}
+
+model DailyActivity {
+  id          String        @id @default(cuid())
+  title       String
+  description String        @default("")
+  date        DateTime      @db.Date
+  category    String        @default("GAMES")
+  status      PublishStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  media       DailyActivityMedia[]
+
+  @@index([status, date])
+}
+
+model DailyActivityMedia {
+  activityId String
+  mediaId    String
+  position   Int           @default(0)
+  activity   DailyActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  media      Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([activityId, mediaId])
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  title       String
+  description String      @default("")
+  date        DateTime    @db.Date
+  time        String      @default("")
+  location    String      @default("")
+  status      EventStatus @default(UPCOMING)
+  published   Boolean     @default(true)
+  coverId     String?
+  cover       Media?      @relation("EventCover", fields: [coverId], references: [id], onDelete: SetNull)
+  media       EventMedia[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([published, date])
+}
+
+model EventMedia {
+  eventId  String
+  mediaId  String
+  position Int    @default(0)
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  media    Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, mediaId])
+}
+
+model Promotion {
+  id          String    @id @default(cuid())
+  title       String
+  description String    @default("")
+  imageId     String?
+  image       Media?    @relation("PromotionImage", fields: [imageId], references: [id], onDelete: SetNull)
+  startDate   DateTime? @db.Date
+  endDate     DateTime? @db.Date
+  ctaLabel    String    @default("Գրանցվել")
+  ctaUrl      String    @default("/enroll")
+  active      Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+/// Program cards ("Մեր զբաղմունքները")
+model Activity {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  icon        String   @default("")
+  imageId     String?
+  image       Media?   @relation("ActivityImage", fields: [imageId], references: [id], onDelete: SetNull)
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ScheduleItem {
+  id          String   @id @default(cuid())
+  time        String
+  title       String
+  description String   @default("")
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Kindergarten spaces ("Մեր միջավայրը")
+model Space {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  coverId     String?
+  cover       Media?   @relation("SpaceCover", fields: [coverId], references: [id], onDelete: SetNull)
+  media       SpaceMedia[]
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SpaceMedia {
+  spaceId  String
+  mediaId  String
+  position Int    @default(0)
+  space    Space  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  media    Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([spaceId, mediaId])
+}
+
+model Testimonial {
+  id            String   @id @default(cuid())
+  parentName    String
+  relation      String   @default("")
+  comment       String
+  photoId       String?
+  photo         Media?   @relation("TestimonialPhoto", fields: [photoId], references: [id], onDelete: SetNull)
+  published     Boolean  @default(false)
+  /// Seeded development placeholders are never shown on the public site in production.
+  isPlaceholder Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Meal {
+  id          String   @id @default(cuid())
+  type        MealType
+  title       String
+  time        String   @default("")
+  description String   @default("")
+  imageId     String?
+  image       Media?   @relation("MealImage", fields: [imageId], references: [id], onDelete: SetNull)
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Weekly menu: weekday 1 (Monday) … 5 (Friday)
+model MenuEntry {
+  id       String   @id @default(cuid())
+  weekday  Int
+  mealType MealType
+  dishes   String   @default("")
+
+  @@unique([weekday, mealType])
+}
+
+/// Free-form page content (about, contact, site, parents info, food intro…)
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String      @id @default(cuid())
+  type      MessageType @default(CONTACT)
+  name      String
+  phone     String
+  email     String      @default("")
+  message   String      @default("")
+  childAge  String      @default("")
+  startDate String      @default("")
+  read      Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  @@index([read, createdAt])
+}
