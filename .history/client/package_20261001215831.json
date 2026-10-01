@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-  "dev": "vite --host 0.0.0.0",
-  "build": "tsc -b && vite build",
-  "preview": "vite preview",
-  "typecheck": "tsc -b"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.85.0",
