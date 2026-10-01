@@ -11,6 +11,7 @@ import { publicRouter } from './routes/public.js';
 import { adminRouter } from './routes/admin/index.js';
 import { filesRouter } from './routes/files.js';
 import { renderIndex, seoRouter } from './seo.js';
+import { ensureAdmin } from './lib/bootstrap.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -87,6 +88,8 @@ if (fs.existsSync(config.clientDist)) {
 }
 
 app.use(errorHandler);
+
+await ensureAdmin().catch((e) => console.error('ensureAdmin failed', e));
 
 app.listen(config.port, () => {
   console.log(`☀️  Sunny Kids Club API listening on http://localhost:${config.port}`);
