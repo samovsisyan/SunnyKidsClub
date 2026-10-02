@@ -7,6 +7,9 @@ const required = (name: string, fallback?: string) => {
   return v;
 };
 
+// Netlify DB exposes the connection string as NETLIFY_DATABASE_URL.
+process.env.DATABASE_URL ||= process.env.NETLIFY_DATABASE_URL;
+
 const isProd = process.env.NODE_ENV === 'production';
 const jwtSecret = required('JWT_SECRET');
 if (isProd && jwtSecret.length < 32) throw new Error('JWT_SECRET must be at least 32 characters in production');
@@ -19,7 +22,7 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN?.split(',').map((s) => s.trim()).filter(Boolean) ?? [],
   timezone: process.env.SITE_TIMEZONE ?? 'Asia/Yerevan',
   storage: {
-    driver: (process.env.STORAGE_DRIVER ?? 'local') as 'local' | 's3',
+    driver: (process.env.STORAGE_DRIVER ?? 'local') as 'local' | 's3' | 'netlify',
     uploadDir: path.resolve(process.env.UPLOAD_DIR ?? './uploads'),
     s3: {
       bucket: process.env.S3_BUCKET ?? '',

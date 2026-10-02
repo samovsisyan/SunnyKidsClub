@@ -1,13 +1,23 @@
 {
   "name": "sunny-kids-club",
   "private": true,
-  "workspaces": ["server", "client"],
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
-    "dev": "prisma generate --schema=server/prisma/schema.prisma && concurrently -n api,web -c yellow,cyan \"npm run dev -w server\" \"npm run dev -w client\"",    "start": "npm run start -w server",
+    "dev": "prisma generate --schema=server/prisma/schema.prisma && concurrently -n api,web -c yellow,cyan \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w server && npm run build -w client",
+    "build:netlify": "prisma generate --schema=server/prisma/schema.prisma && npm run db:netlify -w server && npm run build -w client",
+    "start": "npm run start -w server",
     "db:migrate": "npm run db:migrate -w server",
     "db:seed": "npm run db:seed -w server"
   },
   "devDependencies": {
     "concurrently": "^9.2.0"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.3",
+    "serverless-http": "^4.0.0"
   }
 }
