@@ -4,3 +4,6 @@ dist
 server/uploads
 .DS_Store
 .netlify
+
+# Local data import (contains personal data; never commit — repo is public)
+netlify/database/migrations/*_import_local_data/
