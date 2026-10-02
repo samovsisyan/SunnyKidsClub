@@ -11,7 +11,7 @@ const TYPES: Record<string, string> = { webp: 'image/webp', jpg: 'image/jpeg', j
  */
 export class NetlifyBlobsStorageDriver implements StorageDriver {
   readonly name = 'netlify';
-  private store = getStore({ name: 'media', consistency: 'strong' });
+  private store = getStore('media');
 
   async putFile(key: string, localPath: string, contentType: string) {
     const data = await fs.readFile(localPath);

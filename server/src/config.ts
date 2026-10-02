@@ -7,8 +7,8 @@ const required = (name: string, fallback?: string) => {
   return v;
 };
 
-// Netlify DB exposes the connection string as NETLIFY_DATABASE_URL.
-process.env.DATABASE_URL ||= process.env.NETLIFY_DATABASE_URL;
+// Netlify Database exposes the connection string as NETLIFY_DB_URL.
+process.env.DATABASE_URL ||= process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL;
 
 const isProd = process.env.NODE_ENV === 'production';
 const jwtSecret = required('JWT_SECRET');

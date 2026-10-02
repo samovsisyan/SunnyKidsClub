@@ -3,7 +3,6 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import multer from 'multer';
-import sharp from 'sharp';
 import { config } from '../config.js';
 import { storage } from '../storage/index.js';
 import { HttpError } from './http.js';
@@ -20,6 +19,9 @@ export const uploader = multer({
   },
 });
 
+// Loaded on first use so the rest of the API starts even if the native module is unavailable.
+const loadSharp = async () => (await import('sharp')).default;
+
 function newKeyBase() {
   const d = new Date();
   return `${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${crypto.randomUUID()}`;
@@ -32,6 +34,7 @@ export async function storeImage(file: Express.Multer.File) {
   try {
     if (file.size > config.upload.maxImageBytes) throw new HttpError(413, 'Լուսանկարը չափազանց մեծ է (առավելագույնը 25 ՄԲ)');
     const base = newKeyBase();
+    const sharp = await loadSharp();
     const src = sharp(file.path, { failOn: 'none' }).rotate();
     const large = await src.clone().resize({ width: 2000, height: 2000, fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toBuffer({ resolveWithObject: true });
     const thumb = await src.clone().resize({ width: 720, height: 720, fit: 'inside', withoutEnlargement: true }).webp({ quality: 76 }).toBuffer();
@@ -59,6 +62,7 @@ export async function storeVideo(file: Express.Multer.File) {
 export async function storePoster(file: Express.Multer.File) {
   try {
     if (!IMAGE_TYPES.includes(file.mimetype)) throw new HttpError(415, 'Նկարի ֆորմատը չի աջակցվում');
+    const sharp = await loadSharp();
     const out = await sharp(file.path, { failOn: 'none' })
       .rotate()
       .resize({ width: 1280, height: 1280, fit: 'inside', withoutEnlargement: true })

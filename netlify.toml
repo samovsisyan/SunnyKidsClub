@@ -7,33 +7,10 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@prisma/client", ".prisma", "sharp"]
+  external_node_modules = ["@prisma/client", ".prisma", "sharp", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64"]
   included_files = ["node_modules/.prisma/client/**"]
 
-# API, media files, sitemap and robots are served by the Express app running as a function.
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/api/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/media/*"
-  to = "/.netlify/functions/api/media/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/sitemap.xml"
-  to = "/.netlify/functions/api/sitemap.xml"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/robots.txt"
-  to = "/.netlify/functions/api/robots.txt"
-  status = 200
-  force = true
+# /api/*, /media/*, /sitemap.xml and /robots.txt are routed to the function via its `config.path`.
 
 # React SPA fallback
 [[redirects]]
