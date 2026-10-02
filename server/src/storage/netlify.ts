@@ -3,6 +3,8 @@ import type { Request, Response } from 'express';
 import { getStore } from '@netlify/blobs';
 import type { StorageDriver } from './types.js';
 
+const TYPES: Record<string, string> = { webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', m4v: 'video/x-m4v' };
+
 /**
  * Netlify Blobs (used when the API runs as a Netlify Function, where the disk is not persistent).
  * Objects are always served through the API so private media keeps its session check.
@@ -36,7 +38,7 @@ export class NetlifyBlobsStorageDriver implements StorageDriver {
       res.status(404).end();
       return;
     }
-    res.setHeader('Content-Type', String(blob.metadata.contentType ?? 'application/octet-stream'));
+    res.setHeader('Content-Type', String(blob.metadata.contentType ?? TYPES[key.split('.').pop()!.toLowerCase()] ?? 'application/octet-stream'));
     res.setHeader('Cache-Control', opts.isPublic ? 'public, max-age=31536000, immutable' : 'private, no-store');
     res.end(Buffer.from(blob.data));
   }

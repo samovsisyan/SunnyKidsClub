@@ -17,6 +17,9 @@ async function init() {
 
 export const handler = async (event: Parameters<serverless.Handler>[0], context: Parameters<serverless.Handler>[1]) => {
   if ((event as { blobs?: string }).blobs) connectLambda(event as never);
-  handlerPromise ??= init();
+  handlerPromise ??= init().catch((e) => {
+    handlerPromise = undefined;
+    throw e;
+  });
   return (await handlerPromise)(event, context);
 };
